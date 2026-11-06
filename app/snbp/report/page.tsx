@@ -16,12 +16,21 @@ export default function LaporanResmiSNBPPage() {
     const router = useRouter();
     const [data, setData] = useState<any>(null);
 
+    // State yang bisa diedit langsung sebelum dicetak ke PDF
+    const [namaSiswaEdit, setNamaSiswaEdit] = useState("");
+    const [kelasSiswaEdit, setKelasSiswaEdit] = useState("");
+    const [namaKepsekEdit, setNamaKepsekEdit] = useState("Achmad Saifudin, S.Pd.");
+    const [namaKonselorEdit, setNamaKonselorEdit] = useState("Fadhillah Umar, S.Pd.");
+
     useEffect(() => {
         if (typeof window === "undefined") return;
         const raw = localStorage.getItem("m18_snbp_report_data");
         if (raw) {
             try {
-                setData(JSON.parse(raw));
+                const parsed = JSON.parse(raw);
+                setData(parsed);
+                setNamaSiswaEdit((parsed.namaSiswa || "").toUpperCase());
+                setKelasSiswaEdit((parsed.kelasSiswa || "").toUpperCase());
             } catch { }
         }
     }, []);
@@ -43,8 +52,6 @@ export default function LaporanResmiSNBPPage() {
     }
 
     const {
-        namaSiswa,
-        kelasSiswa,
         rankingParalel,
         rumpun,
         tanggal,
@@ -74,7 +81,8 @@ export default function LaporanResmiSNBPPage() {
               body { background: white !important; padding: 0 !important; margin: 0 !important; }
               .no-print { display: none !important; }
               .print-card { box-shadow: none !important; border: none !important; width: 100% !important; padding: 0 !important; }
-              @page { size: A4 portrait; margin: 10mm; }
+              @page { size: A4 portrait; margin: 8mm; }
+              input { border: none !important; background: transparent !important; }
             }
           `
                 }}
@@ -91,6 +99,9 @@ export default function LaporanResmiSNBPPage() {
                 </button>
 
                 <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-slate-500 font-medium hidden sm:inline">
+                        💡 Nama &amp; Tanda Tangan dapat diedit langsung sebelum cetak
+                    </span>
                     <button
                         onClick={() => window.print()}
                         className="px-4 py-2 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs"
@@ -103,19 +114,22 @@ export default function LaporanResmiSNBPPage() {
 
             {/* LEMBAR DOKUMEN CETAK A4 */}
             <div className="max-w-4xl mx-auto bg-white rounded-3xl border border-slate-200 shadow-xl p-6 sm:p-10 space-y-6 print-card text-left">
-                {/* KOP SURAT FORMAL */}
-                <div className="flex items-center gap-4 border-b-2 border-slate-900 pb-4 text-center">
-                    <div className="w-20 h-20 shrink-0 flex items-center justify-center p-1">
-                        <div className="w-16 h-16 rounded-2xl bg-[#1e3a8a] border-2 border-amber-400 flex items-center justify-center text-amber-400 font-black text-2xl shadow-xs">
-                            M18
-                        </div>
-                    </div>
+                {/* KOP SURAT FORMAL RESMI DENGAN LOGO SMAM 18 */}
+                <div className="flex items-center gap-5 border-b-2 border-slate-900 pb-4 text-center">
+                    <img
+                        src="/logo.png"
+                        alt="Logo SMA Muhammadiyah 18 Jakarta"
+                        className="w-20 h-20 object-contain shrink-0"
+                        onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                        }}
+                    />
                     <div className="flex-1 space-y-0.5">
                         <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                            MAJELIS PENDIDIKAN DASAR DAN MENENGAH
+                            MAJELIS PENDIDIKAN DASAR DAN MENENGAH DAN PENDIDIKAN NONFORMAL
                         </div>
                         <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                            PIMPINAN DAERAH MUHAMMADIYAH JAKARTA SELATAN
+                            PIMPINAN CABANG MUHAMMADIYAH KEBAYORAN LAMA
                         </div>
                         <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight uppercase">
                             SMA MUHAMMADIYAH 18 JAKARTA
@@ -129,21 +143,38 @@ export default function LaporanResmiSNBPPage() {
                     </div>
                 </div>
 
-                {/* IDENTITAS SISWA & STATUS KELAYAKAN */}
+                {/* IDENTITAS SISWA (EDITABLE & FULL KAPITAL) */}
                 <div
                     className="p-4 rounded-2xl text-white flex flex-col sm:flex-row items-center justify-between gap-3 text-xs shadow-xs"
                     style={{ backgroundColor: "#065f46" }}
                 >
-                    <div className="space-y-0.5">
+                    <div className="space-y-1 w-full sm:w-auto">
                         <div className="font-mono text-[10px] text-emerald-200 font-bold uppercase">
                             LEMBAR KEPUTUSAN PEMETAAN SNBP 2026
                         </div>
-                        <div className="font-black text-base uppercase tracking-wide">{namaSiswa}</div>
-                        <div className="text-[11px] text-emerald-100 font-mono">
-                            KELAS: {kelasSiswa} &bull; RUMPUN: {rumpun} &bull; PERINGKAT ELIGIBLE: #{rankingParalel}
+                        <div className="flex items-center gap-2">
+                            <span className="font-bold text-[11px] text-emerald-200 uppercase">NAMA:</span>
+                            <input
+                                type="text"
+                                value={namaSiswaEdit}
+                                onChange={(e) => setNamaSiswaEdit(e.target.value.toUpperCase())}
+                                placeholder="NAMA LENGKAP SISWA"
+                                className="font-black text-base uppercase tracking-wide bg-transparent text-white border-b border-emerald-400 focus:outline-none focus:border-amber-400 w-full sm:w-80"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] text-emerald-100 font-mono">
+                            <span className="text-emerald-200">KELAS:</span>
+                            <input
+                                type="text"
+                                value={kelasSiswaEdit}
+                                onChange={(e) => setKelasSiswaEdit(e.target.value.toUpperCase())}
+                                placeholder="XII - 1"
+                                className="font-bold uppercase tracking-wide bg-transparent text-emerald-100 border-b border-emerald-400 focus:outline-none w-28"
+                            />
+                            <span>&bull; RUMPUN: {rumpun} &bull; PERINGKAT ELIGIBLE: #{rankingParalel}</span>
                         </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0">
                         <span className="text-[10px] text-emerald-200 font-mono block uppercase">TANGGAL KONSULTASI</span>
                         <span className="font-mono font-bold text-xs">{tanggal}</span>
                     </div>
@@ -294,7 +325,7 @@ export default function LaporanResmiSNBPPage() {
                 <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 text-xs space-y-1.5 text-slate-800">
                     <div className="font-bold uppercase font-mono text-emerald-950 flex items-center gap-1.5">
                         <CheckCircle2 className="w-4 h-4 text-emerald-700" />
-                        <span>VERIFIKASI LINEARITAS &amp; CATATAN PEMBIMBING BK (TIM PTN M18)</span>
+                        <span>VERIFIKASI LINEARITAS &amp; CATATAN PEMBIMBING BK (TIM PTN SMAM 18)</span>
                     </div>
                     <p className="leading-relaxed italic">
                         &quot;{catatanKonseling}&quot;
@@ -304,27 +335,56 @@ export default function LaporanResmiSNBPPage() {
                     </p>
                 </div>
 
-                {/* TANDA TANGAN RESMI */}
-                <div className="pt-8 pb-4 grid grid-cols-2 gap-8 text-center text-xs font-serif text-slate-800">
-                    <div className="space-y-16">
+                {/* TANDA TANGAN FORMAL 3 KOLOM RESMI (LANGSUNG BISA DIEDIT) */}
+                <div className="pt-6 pb-2 grid grid-cols-3 gap-4 text-center text-xs font-serif text-slate-800 border-t border-slate-200">
+                    {/* Kolom 1: Siswa */}
+                    <div className="flex flex-col justify-between h-44">
                         <div>
-                            <p className="text-[11px]">Mengetahui,</p>
-                            <p className="font-bold text-[11.5px]">Koordinator TIM PTN / Pembina BK</p>
+                            <p className="text-[11px]">Jakarta, {tanggal}</p>
+                            <p className="font-bold text-[11.5px]">Siswa Peserta Asesmen</p>
                         </div>
                         <div>
-                            <p className="font-bold underline text-[12px]">Fadhillah Umar, S.Pd.</p>
-                            <p className="text-[10px] font-mono text-slate-500">NIP: 121 2026 001</p>
+                            <input
+                                type="text"
+                                value={namaSiswaEdit}
+                                onChange={(e) => setNamaSiswaEdit(e.target.value.toUpperCase())}
+                                className="font-bold underline text-center w-full uppercase bg-transparent border-b border-dashed border-slate-300 focus:outline-none"
+                            />
+                            <p className="text-[10px] font-mono text-slate-500">Kelas: {kelasSiswaEdit}</p>
                         </div>
                     </div>
 
-                    <div className="space-y-16">
+                    {/* Kolom 2: TIM PTN */}
+                    <div className="flex flex-col justify-between h-44">
                         <div>
-                            <p className="text-[11px]">Jakarta, {tanggal}</p>
-                            <p className="font-bold text-[11.5px]">Orang Tua / Wali Siswa</p>
+                            <p className="text-[11px]">Konselor Pendamping,</p>
+                            <p className="font-bold text-[11.5px] uppercase">TIM PTN SMAM 18 JAKARTA</p>
                         </div>
                         <div>
-                            <p className="font-bold text-[12px]">( .................................................... )</p>
-                            <p className="text-[10px] font-mono text-slate-500">Nama Siswa: {namaSiswa}</p>
+                            <input
+                                type="text"
+                                value={namaKonselorEdit}
+                                onChange={(e) => setNamaKonselorEdit(e.target.value)}
+                                className="font-bold underline text-center w-full bg-transparent border-b border-dashed border-slate-300 focus:outline-none"
+                            />
+                            <p className="text-[10px] font-mono text-slate-500">Koordinator Bimbingan PTN</p>
+                        </div>
+                    </div>
+
+                    {/* Kolom 3: Kepala Sekolah */}
+                    <div className="flex flex-col justify-between h-44">
+                        <div>
+                            <p className="text-[11px]">Mengetahui,</p>
+                            <p className="font-bold text-[11.5px] uppercase">Kepala SMA Muhammadiyah 18</p>
+                        </div>
+                        <div>
+                            <input
+                                type="text"
+                                value={namaKepsekEdit}
+                                onChange={(e) => setNamaKepsekEdit(e.target.value)}
+                                className="font-bold underline text-center w-full bg-transparent border-b border-dashed border-slate-300 focus:outline-none"
+                            />
+                            <p className="text-[10px] font-mono text-slate-500">NBM: 108 5345</p>
                         </div>
                     </div>
                 </div>

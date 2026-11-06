@@ -40,9 +40,9 @@ export default function ModulSNBTPage() {
         return Array.isArray(databaseSnbtLokal) ? (databaseSnbtLokal as ProdiItem[]) : [];
     }, []);
 
-    // 2. STATE IDENTITAS & TARGET
-    const [namaSiswa, setNamaSiswa] = useState("Fadhillah Umar");
-    const [kelasSiswa, setKelasSiswa] = useState("XII - 1");
+    // 2. STATE IDENTITAS & TARGET (BERSIH DARI DATA DUMMY AWAL)
+    const [namaSiswa, setNamaSiswa] = useState("");
+    const [kelasSiswa, setKelasSiswa] = useState("");
 
     const [target1, setTarget1] = useState<ProdiItem>({
         id: "default-1",
@@ -94,15 +94,15 @@ export default function ModulSNBTPage() {
         setSearchQuery("");
     };
 
-    // 4. SKOR 7 SUBTES (MULTI-TO)
+    // 4. SKOR 7 SUBTES (MULTI-TO) - BERSIH SECARA DEFAULT
     const [subtesScores, setSubtesScores] = useState<{ [key: string]: number[] }>({
-        pu: [640, 670, 710],
-        pk: [650, 680, 725],
-        pm: [630, 675, 715],
-        pbm: [620, 650, 685],
-        ppu: [610, 640, 670],
-        indo: [650, 680, 710],
-        ing: [640, 660, 690]
+        pu: [0, 0, 0],
+        pk: [0, 0, 0],
+        pm: [0, 0, 0],
+        pbm: [0, 0, 0],
+        ppu: [0, 0, 0],
+        indo: [0, 0, 0],
+        ing: [0, 0, 0]
     });
 
     const subtesLabels: { [key: string]: string } = {
@@ -113,6 +113,21 @@ export default function ModulSNBTPage() {
         ppu: "Pengetahuan & Pemahaman Umum (PPU)",
         indo: "Literasi Bahasa Indonesia",
         ing: "Literasi Bahasa Inggris"
+    };
+
+    // Fitur muat data contoh untuk simulasi/presentasi
+    const handleLoadContohData = () => {
+        setNamaSiswa("FADHILLAH UMAR");
+        setKelasSiswa("XII - 1");
+        setSubtesScores({
+            pu: [640, 675, 720],
+            pk: [650, 685, 735],
+            pm: [630, 675, 720],
+            pbm: [620, 660, 690],
+            ppu: [610, 645, 680],
+            indo: [650, 685, 720],
+            ing: [640, 670, 700]
+        });
     };
 
     // 5. ENGINE ANALISIS MULTI-TO
@@ -148,6 +163,7 @@ export default function ModulSNBTPage() {
         });
 
         const calcPeluang = (prodi: ProdiItem) => {
+            if (weightedScore === 0) return 0;
             const diff = weightedScore - (prodi.passingGrade || 650);
             let p = Math.round(55 + diff * 0.85);
             if (prodi.keketatan < 2.5) p -= 5;
@@ -161,8 +177,8 @@ export default function ModulSNBTPage() {
             weightedScore,
             deltaTotal,
             velocity,
-            bottleneck: { label: subtesLabels[bottleneckKey], score: minScore },
-            strongest: { label: subtesLabels[strongestKey], score: maxScore },
+            bottleneck: { label: subtesLabels[bottleneckKey], score: minScore === 9999 ? 0 : minScore },
+            strongest: { label: subtesLabels[strongestKey], score: maxScore === -1 ? 0 : maxScore },
             peluang1: calcPeluang(target1),
             peluang2: calcPeluang(target2)
         };
@@ -171,8 +187,8 @@ export default function ModulSNBTPage() {
     // 6. GENERATE & LANJUT KE RAPOR
     const handleProceedToReport = () => {
         const reportData = {
-            namaSiswa,
-            kelasSiswa,
+            namaSiswa: (namaSiswa || "SISWA PESERTA ASESMEN").toUpperCase(),
+            kelasSiswa: (kelasSiswa || "XII").toUpperCase(),
             tanggal: new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
             target1,
             target2,
@@ -270,19 +286,39 @@ export default function ModulSNBTPage() {
                 </div>
             )}
 
-            {/* HEADER NAVIGASI */}
+            {/* HEADER NAVIGASI DENGAN LOGO RESMI */}
             <header className="border-b bg-white sticky top-0 z-30 shadow-2xs">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-                    <Link
-                        href="/"
-                        className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-blue-900 transition"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        <span>Kembali ke Portal Hub</span>
-                    </Link>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href="/"
+                            className="p-2 rounded-xl hover:bg-slate-100 text-slate-600 transition flex items-center justify-center mr-1"
+                            title="Kembali ke Portal Hub"
+                        >
+                            <ArrowLeft className="w-4 h-4" />
+                        </Link>
+                        <div className="w-10 h-10 p-1 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-center justify-center shrink-0">
+                            <img
+                                src="/logo.png"
+                                alt="Logo SMA Muhammadiyah 18 Jakarta"
+                                className="w-full h-full object-contain"
+                            />
+                        </div>
+                        <div className="text-left">
+                            <span className="text-xs sm:text-sm font-black tracking-tight text-[#1e3a8a] uppercase block">
+                                SMA MUHAMMADIYAH 18 JAKARTA
+                            </span>
+                            <span className="text-[10px] text-blue-800 font-mono font-bold block">
+                                MODUL ANALISIS &amp; DIAGNOSTIK SNBT 2026
+                            </span>
+                        </div>
+                    </div>
+
                     <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                        <span className="font-mono text-xs font-bold text-slate-700">Database SNBT Terhubung</span>
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="font-mono text-xs font-bold text-slate-700 hidden sm:inline">
+                            Database SNBT Terhubung
+                        </span>
                     </div>
                 </div>
             </header>
@@ -302,17 +338,7 @@ export default function ModulSNBTPage() {
                     </div>
                     <button
                         type="button"
-                        onClick={() => {
-                            setSubtesScores({
-                                pu: [640, 675, 720],
-                                pk: [650, 685, 735],
-                                pm: [630, 675, 720],
-                                pbm: [620, 660, 690],
-                                ppu: [610, 645, 680],
-                                indo: [650, 685, 720],
-                                ing: [640, 670, 700]
-                            });
-                        }}
+                        onClick={handleLoadContohData}
                         className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-blue-950 rounded-xl text-xs font-black transition shadow-sm cursor-pointer flex items-center gap-1.5 shrink-0"
                     >
                         <Zap className="w-4 h-4" />
@@ -325,21 +351,27 @@ export default function ModulSNBTPage() {
                     {/* Identitas Siswa */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6 border-b border-slate-100">
                         <div>
-                            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Lengkap Siswa:</label>
+                            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                                Nama Lengkap Siswa (Otomatis Kapital):
+                            </label>
                             <input
                                 type="text"
+                                placeholder="MASUKKAN NAMA SISWA..."
                                 value={namaSiswa}
-                                onChange={(e) => setNamaSiswa(e.target.value)}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:bg-white focus:border-blue-700 outline-none"
+                                onChange={(e) => setNamaSiswa(e.target.value.toUpperCase())}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:bg-white focus:border-blue-700 outline-none uppercase"
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Kelas / Rombel:</label>
+                            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                                Kelas / Rombel:
+                            </label>
                             <input
                                 type="text"
+                                placeholder="XII - 1"
                                 value={kelasSiswa}
-                                onChange={(e) => setKelasSiswa(e.target.value)}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:bg-white focus:border-blue-700 outline-none"
+                                onChange={(e) => setKelasSiswa(e.target.value.toUpperCase())}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:bg-white focus:border-blue-700 outline-none uppercase font-mono"
                             />
                         </div>
                     </div>
@@ -479,16 +511,19 @@ export default function ModulSNBTPage() {
                                                     <td key={idx} className={`p-2.5 text-center ${idx === 2 ? "bg-blue-50/40" : ""}`}>
                                                         <input
                                                             type="number"
-                                                            min={200}
+                                                            min={0}
                                                             max={1000}
-                                                            value={vals[idx] || ""}
+                                                            placeholder="0"
+                                                            value={vals[idx] !== 0 ? vals[idx] : ""}
                                                             onChange={(e) => {
-                                                                const val = Number(e.target.value);
+                                                                const val = Number(e.target.value) || 0;
                                                                 const copy = [...vals];
                                                                 copy[idx] = val;
                                                                 setSubtesScores({ ...subtesScores, [k]: copy });
                                                             }}
-                                                            className={`w-20 text-center border rounded-lg py-1.5 px-1 text-xs font-mono font-bold ${idx === 2 ? "bg-white border-blue-400 text-blue-950 shadow-2xs" : "bg-slate-50 border-slate-200"
+                                                            className={`w-20 text-center border rounded-lg py-1.5 px-1 text-xs font-mono font-bold ${idx === 2
+                                                                    ? "bg-white border-blue-400 text-blue-950 shadow-2xs"
+                                                                    : "bg-slate-50 border-slate-200"
                                                                 }`}
                                                         />
                                                     </td>

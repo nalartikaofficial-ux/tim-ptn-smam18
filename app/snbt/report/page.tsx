@@ -5,26 +5,29 @@ import { useRouter } from "next/navigation";
 import {
     Printer,
     ArrowLeft,
-    Award,
     Target,
-    TrendingUp,
-    AlertTriangle,
-    CheckCircle2,
-    XCircle,
-    Clock,
-    Sparkles
+    AlertTriangle
 } from "lucide-react";
 
 export default function LaporanResmiMultiTOPage() {
     const router = useRouter();
     const [data, setData] = useState<any>(null);
 
+    // State yang bisa diedit langsung sebelum dicetak ke PDF
+    const [namaSiswaEdit, setNamaSiswaEdit] = useState("");
+    const [kelasSiswaEdit, setKelasSiswaEdit] = useState("");
+    const [namaKepsekEdit, setNamaKepsekEdit] = useState("Achmad Saifudin, S.Pd.");
+    const [namaKonselorEdit, setNamaKonselorEdit] = useState("Fadhillah Umar, S.Pd.");
+
     useEffect(() => {
         if (typeof window === "undefined") return;
         const raw = localStorage.getItem("m18_snbt_report_data");
         if (raw) {
             try {
-                setData(JSON.parse(raw));
+                const parsed = JSON.parse(raw);
+                setData(parsed);
+                setNamaSiswaEdit((parsed.namaSiswa || "").toUpperCase());
+                setKelasSiswaEdit((parsed.kelasSiswa || "").toUpperCase());
             } catch { }
         }
     }, []);
@@ -45,7 +48,7 @@ export default function LaporanResmiMultiTOPage() {
         );
     }
 
-    const { namaSiswa, kelasSiswa, tanggal, target1, target2, subtesScores, analytics } = data;
+    const { tanggal, target1, target2, subtesScores, analytics } = data;
 
     const subtesLabels: Record<string, string> = {
         pu: "Penalaran Umum (PU)",
@@ -70,7 +73,8 @@ export default function LaporanResmiMultiTOPage() {
               body { background: white !important; padding: 0 !important; margin: 0 !important; }
               .no-print { display: none !important; }
               .print-card { box-shadow: none !important; border: none !important; width: 100% !important; padding: 0 !important; }
-              @page { size: A4 portrait; margin: 10mm; }
+              @page { size: A4 portrait; margin: 8mm; }
+              input { border: none !important; background: transparent !important; }
             }
           `
                 }}
@@ -87,6 +91,9 @@ export default function LaporanResmiMultiTOPage() {
                 </button>
 
                 <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-slate-500 font-medium hidden sm:inline">
+                        💡 Nama &amp; Tanda Tangan dapat diedit langsung sebelum cetak
+                    </span>
                     <button
                         onClick={() => window.print()}
                         className="px-4 py-2 rounded-xl bg-[#1e3a8a] hover:bg-blue-900 text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs"
@@ -99,19 +106,22 @@ export default function LaporanResmiMultiTOPage() {
 
             {/* LEMBAR RAPOR RESMI A4 */}
             <div className="max-w-4xl mx-auto bg-white rounded-3xl border border-slate-200 shadow-xl p-6 sm:p-10 space-y-6 print-card text-left">
-                {/* KOP SURAT RESMI */}
-                <div className="flex items-center gap-4 border-b-2 border-slate-900 pb-4 text-center">
-                    <div className="w-20 h-20 shrink-0 flex items-center justify-center p-1">
-                        <div className="w-16 h-16 rounded-2xl bg-[#1e3a8a] border-2 border-amber-400 flex items-center justify-center text-amber-400 font-black text-2xl shadow-xs">
-                            M18
-                        </div>
-                    </div>
+                {/* KOP SURAT FORMAL RESMI DENGAN LOGO SMAM 18 */}
+                <div className="flex items-center gap-5 border-b-2 border-slate-900 pb-4 text-center">
+                    <img
+                        src="/logo.png"
+                        alt="Logo SMA Muhammadiyah 18 Jakarta"
+                        className="w-20 h-20 object-contain shrink-0"
+                        onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                        }}
+                    />
                     <div className="flex-1 space-y-0.5">
                         <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                            MAJELIS PENDIDIKAN DASAR DAN MENENGAH
+                            MAJELIS PENDIDIKAN DASAR DAN MENENGAH DAN PENDIDIKAN NONFORMAL
                         </div>
                         <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                            PIMPINAN DAERAH MUHAMMADIYAH JAKARTA SELATAN
+                            PIMPINAN CABANG MUHAMMADIYAH KEBAYORAN LAMA
                         </div>
                         <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight uppercase">
                             SMA MUHAMMADIYAH 18 JAKARTA
@@ -125,25 +135,44 @@ export default function LaporanResmiMultiTOPage() {
                     </div>
                 </div>
 
-                {/* IDENTITAS SISWA & JADWAL */}
+                {/* IDENTITAS SISWA (EDITABLE & FULL KAPITAL) */}
                 <div
                     className="p-4 rounded-2xl text-white flex flex-col sm:flex-row items-center justify-between gap-3 text-xs shadow-xs"
                     style={{ backgroundColor: "#1e3a8a" }}
                 >
-                    <div className="space-y-0.5">
-                        <div className="font-mono text-[10px] text-blue-200 font-bold uppercase">LEMBAR EVALUASI MULTI-TRY OUT</div>
-                        <div className="font-black text-base uppercase tracking-wide">{namaSiswa}</div>
-                        <div className="text-[11px] text-blue-100 font-mono">
-                            KELAS: {kelasSiswa} &bull; ANGKATAN 2026/2027 &bull; SMA MUHAMMADIYAH 18
+                    <div className="space-y-1 w-full sm:w-auto">
+                        <div className="font-mono text-[10px] text-blue-200 font-bold uppercase">
+                            LEMBAR EVALUASI &amp; PROYEKSI MULTI-TRY OUT SNBT
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="font-bold text-[11px] text-blue-200 uppercase">NAMA:</span>
+                            <input
+                                type="text"
+                                value={namaSiswaEdit}
+                                onChange={(e) => setNamaSiswaEdit(e.target.value.toUpperCase())}
+                                placeholder="NAMA SISWA LENGKAP"
+                                className="font-black text-base uppercase tracking-wide bg-transparent text-white border-b border-blue-400 focus:outline-none focus:border-amber-400 w-full sm:w-80"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] text-blue-100 font-mono">
+                            <span className="text-blue-200">KELAS:</span>
+                            <input
+                                type="text"
+                                value={kelasSiswaEdit}
+                                onChange={(e) => setKelasSiswaEdit(e.target.value.toUpperCase())}
+                                placeholder="XII - 1"
+                                className="font-bold uppercase tracking-wide bg-transparent text-blue-100 border-b border-blue-400 focus:outline-none w-28"
+                            />
+                            <span>&bull; ANGKATAN 2026/2027 &bull; TIM PTN SMAM 18</span>
                         </div>
                     </div>
-                    <div className="text-right">
-                        <span className="text-[10px] text-blue-200 font-mono block uppercase">TANGGAL ANALISIS</span>
+                    <div className="text-right shrink-0">
+                        <span className="text-[10px] text-blue-200 font-mono block uppercase">TANGGAL KONSULTASI</span>
                         <span className="font-mono font-bold text-xs">{tanggal}</span>
                     </div>
                 </div>
 
-                {/* BANNER PROYEKSI NILAI IRT */}
+                {/* PROYEKSI NILAI IRT */}
                 <div
                     className="p-5 rounded-2xl text-white text-center space-y-1 shadow-xs"
                     style={{ backgroundColor: "#1c4cb7" }}
@@ -153,11 +182,11 @@ export default function LaporanResmiMultiTOPage() {
                     </div>
                     <div className="text-5xl font-black tracking-tight text-white my-1">{analytics.weightedScore}</div>
                     <div className="text-[10.5px] text-blue-100 font-mono">
-                        Kombinasi Bobot Progresi: 50% TO 3 (Terakhir) + 30% TO 2 (Mid) + 20% TO 1 (Awal) &bull; Skala 200 s.d. 1000
+                        Kombinasi Bobot: 50% TO 3 (Terakhir) + 30% TO 2 (Mid) + 20% TO 1 (Awal) &bull; Skala Baku IRT
                     </div>
                 </div>
 
-                {/* EVALUASI PILIHAN KAMPUS */}
+                {/* TARGET KAMPUS & PELUANG */}
                 <div className="space-y-2">
                     <div className="flex items-center gap-2 text-xs font-bold text-slate-800 font-mono uppercase">
                         <Target className="w-4 h-4 text-blue-700" />
@@ -165,18 +194,16 @@ export default function LaporanResmiMultiTOPage() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {/* Pilihan 1 */}
                         <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 space-y-2">
                             <div className="text-[10px] font-mono font-bold text-slate-400 uppercase">PILIHAN 1 (UTAMA):</div>
                             <div className="text-sm font-black text-slate-900 leading-tight">
                                 [{target1.jenjang || "S1"}] {target1.prodi}
                             </div>
                             <div className="text-xs font-semibold text-slate-600">{target1.kampus}</div>
-
                             <div className="grid grid-cols-3 gap-1.5 pt-1 text-[10px] font-mono font-bold border-t border-slate-200">
                                 <div>
                                     <span className="text-slate-400 block text-[9px]">Daya Tampung:</span>
-                                    <span className="text-slate-800">{target1.dayaTampung} Kursi</span>
+                                    <span className="text-slate-800">{target1.dayaTampung}</span>
                                 </div>
                                 <div>
                                     <span className="text-slate-400 block text-[9px]">Keketatan:</span>
@@ -187,7 +214,6 @@ export default function LaporanResmiMultiTOPage() {
                                     <span className="text-emerald-700">&ge; {target1.passingGrade}</span>
                                 </div>
                             </div>
-
                             <div className="pt-2 border-t border-slate-200 flex items-center justify-between">
                                 <span className="text-xs font-bold text-slate-700">Peluang Kelulusan:</span>
                                 <span
@@ -199,18 +225,16 @@ export default function LaporanResmiMultiTOPage() {
                             </div>
                         </div>
 
-                        {/* Pilihan 2 */}
                         <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 space-y-2">
                             <div className="text-[10px] font-mono font-bold text-slate-400 uppercase">PILIHAN 2 (CADANGAN):</div>
                             <div className="text-sm font-black text-slate-900 leading-tight">
                                 [{target2.jenjang || "S1"}] {target2.prodi}
                             </div>
                             <div className="text-xs font-semibold text-slate-600">{target2.kampus}</div>
-
                             <div className="grid grid-cols-3 gap-1.5 pt-1 text-[10px] font-mono font-bold border-t border-slate-200">
                                 <div>
                                     <span className="text-slate-400 block text-[9px]">Daya Tampung:</span>
-                                    <span className="text-slate-800">{target2.dayaTampung} Kursi</span>
+                                    <span className="text-slate-800">{target2.dayaTampung}</span>
                                 </div>
                                 <div>
                                     <span className="text-slate-400 block text-[9px]">Keketatan:</span>
@@ -221,7 +245,6 @@ export default function LaporanResmiMultiTOPage() {
                                     <span className="text-emerald-700">&ge; {target2.passingGrade}</span>
                                 </div>
                             </div>
-
                             <div className="pt-2 border-t border-slate-200 flex items-center justify-between">
                                 <span className="text-xs font-bold text-slate-700">Peluang Kelulusan:</span>
                                 <span
@@ -235,16 +258,15 @@ export default function LaporanResmiMultiTOPage() {
                     </div>
                 </div>
 
-                {/* TABEL PERKEMBANGAN 7 SUBTES */}
+                {/* TABEL PROGRES 7 SUBTES */}
                 <div className="space-y-1">
                     <div
                         className="p-2.5 rounded-t-xl text-white flex items-center justify-between text-xs font-bold font-mono"
                         style={{ backgroundColor: "#1e3a8a" }}
                     >
-                        <span>REKAPITULASI PROGRES 7 SUBTES (SKOR 200 - 1000)</span>
+                        <span>REKAPITULASI CAPAIAN 7 SUBTES (SKOR 200 - 1000)</span>
                         <span>Delta: {analytics.deltaTotal >= 0 ? `+${analytics.deltaTotal}` : analytics.deltaTotal} Poin</span>
                     </div>
-
                     <div className="border border-slate-200 rounded-b-xl overflow-hidden">
                         <table className="w-full text-left text-xs">
                             <thead className="bg-slate-50 text-[10px] font-mono font-bold text-slate-500 border-b">
@@ -253,7 +275,7 @@ export default function LaporanResmiMultiTOPage() {
                                     <th className="p-2.5 text-center">TO 1 (AWAL)</th>
                                     <th className="p-2.5 text-center">TO 2 (MID)</th>
                                     <th className="p-2.5 text-center bg-blue-50 text-blue-900 font-black">TO 3 (AKHIR)</th>
-                                    <th className="p-2.5 text-center">TREN KELAS</th>
+                                    <th className="p-2.5 text-center">DELTA &amp; TREN</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
@@ -270,7 +292,10 @@ export default function LaporanResmiMultiTOPage() {
                                                 {vals[2]}
                                             </td>
                                             <td className="p-2.5 text-center font-mono text-[10.5px]">
-                                                <span className={`px-2 py-0.5 rounded font-bold ${isUp ? "text-emerald-700 bg-emerald-50" : "text-rose-700 bg-rose-50"}`}>
+                                                <span
+                                                    className={`px-2 py-0.5 rounded font-bold ${isUp ? "text-emerald-700 bg-emerald-50" : "text-rose-700 bg-rose-50"
+                                                        }`}
+                                                >
                                                     {isUp ? `+${d}` : d}
                                                 </span>
                                             </td>
@@ -282,41 +307,67 @@ export default function LaporanResmiMultiTOPage() {
                     </div>
                 </div>
 
-                {/* CATATAN DIAGNOSTIK & REKOMENDASI BK */}
+                {/* CATATAN DIAGNOSTIK & REKOMENDASI */}
                 <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-xs space-y-1.5 text-slate-800">
                     <div className="font-bold uppercase font-mono text-amber-950 flex items-center gap-1.5">
                         <AlertTriangle className="w-4 h-4 text-amber-700" />
-                        <span>DIAGNOSTIK AKADEMIK &amp; REKOMENDASI BELAJAR (TIM PTN M18)</span>
+                        <span>DIAGNOSTIK AKADEMIK &amp; REKOMENDASI BELAJAR (TIM PTN SMAM 18)</span>
                     </div>
                     <p className="leading-relaxed">
-                        Siswa memiliki modal unggul pada subtes <b>{analytics.strongest.label}</b> (Skor: {analytics.strongest.score}). Namun, terdapat faktor penahan kelulusan (*bottleneck*) pada subtes <b>{analytics.bottleneck.label}</b> (Skor: {analytics.bottleneck.score}).
-                    </p>
-                    <p className="italic text-slate-600 text-[11px]">
-                        Rekomendasi Pembimbing: Alokasikan 40% waktu belajar harian untuk penambahan bank soal pada subtes bottleneck guna mengamankan ambang batas passing grade prodi target utama.
+                        Siswa memiliki modal unggul pada subtes <b>{analytics.strongest.label}</b> (Skor: {analytics.strongest.score}). Namun, faktor penahan (*bottleneck*) berada pada subtes <b>{analytics.bottleneck.label}</b> (Skor: {analytics.bottleneck.score}).
                     </p>
                 </div>
 
-                {/* TANDA TANGAN FORMAL */}
-                <div className="pt-8 pb-4 grid grid-cols-2 gap-8 text-center text-xs font-serif text-slate-800">
-                    <div className="space-y-16">
-                        <div>
-                            <p className="text-[11px]">Mengetahui,</p>
-                            <p className="font-bold text-[11.5px]">Koordinator TIM PTN / Pembina</p>
-                        </div>
-                        <div>
-                            <p className="font-bold underline text-[12px]">Fadhillah Umar, S.Pd.</p>
-                            <p className="text-[10px] font-mono text-slate-500">NIP: 121 2026 001</p>
-                        </div>
-                    </div>
-
-                    <div className="space-y-16">
+                {/* TANDA TANGAN FORMAL 3 KOLOM RESMI (LANGSUNG BISA DIEDIT) */}
+                <div className="pt-6 pb-2 grid grid-cols-3 gap-4 text-center text-xs font-serif text-slate-800 border-t border-slate-200">
+                    {/* Kolom 1: Siswa */}
+                    <div className="flex flex-col justify-between h-44">
                         <div>
                             <p className="text-[11px]">Jakarta, {tanggal}</p>
                             <p className="font-bold text-[11.5px]">Siswa Peserta Asesmen</p>
                         </div>
                         <div>
-                            <p className="font-bold underline text-[12px]">{namaSiswa}</p>
-                            <p className="text-[10px] font-mono text-slate-500">Kelas: {kelasSiswa}</p>
+                            <input
+                                type="text"
+                                value={namaSiswaEdit}
+                                onChange={(e) => setNamaSiswaEdit(e.target.value.toUpperCase())}
+                                className="font-bold underline text-center w-full uppercase bg-transparent border-b border-dashed border-slate-300 focus:outline-none"
+                            />
+                            <p className="text-[10px] font-mono text-slate-500">Kelas: {kelasSiswaEdit}</p>
+                        </div>
+                    </div>
+
+                    {/* Kolom 2: TIM PTN */}
+                    <div className="flex flex-col justify-between h-44">
+                        <div>
+                            <p className="text-[11px]">Konselor Pendamping,</p>
+                            <p className="font-bold text-[11.5px] uppercase">TIM PTN SMAM 18 JAKARTA</p>
+                        </div>
+                        <div>
+                            <input
+                                type="text"
+                                value={namaKonselorEdit}
+                                onChange={(e) => setNamaKonselorEdit(e.target.value)}
+                                className="font-bold underline text-center w-full bg-transparent border-b border-dashed border-slate-300 focus:outline-none"
+                            />
+                            <p className="text-[10px] font-mono text-slate-500">Koordinator Bimbingan PTN</p>
+                        </div>
+                    </div>
+
+                    {/* Kolom 3: Kepala Sekolah */}
+                    <div className="flex flex-col justify-between h-44">
+                        <div>
+                            <p className="text-[11px]">Mengetahui,</p>
+                            <p className="font-bold text-[11.5px] uppercase">Kepala SMA Muhammadiyah 18</p>
+                        </div>
+                        <div>
+                            <input
+                                type="text"
+                                value={namaKepsekEdit}
+                                onChange={(e) => setNamaKepsekEdit(e.target.value)}
+                                className="font-bold underline text-center w-full bg-transparent border-b border-dashed border-slate-300 focus:outline-none"
+                            />
+                            <p className="text-[10px] font-mono text-slate-500">NBM: 108 5345</p>
                         </div>
                     </div>
                 </div>

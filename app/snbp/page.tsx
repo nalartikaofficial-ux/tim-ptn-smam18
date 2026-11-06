@@ -40,14 +40,14 @@ export default function ModulSNBPPage() {
         return Array.isArray(databaseSnbtLokal) ? (databaseSnbtLokal as ProdiItem[]) : [];
     }, []);
 
-    // 2. STATE IDENTITAS SISWA & KELAS
-    const [namaSiswa, setNamaSiswa] = useState("Fadhillah Umar");
-    const [kelasSiswa, setKelasSiswa] = useState("XII - 1");
-    const [rankingParalel, setRankingParalel] = useState(1);
+    // 2. STATE IDENTITAS SISWA & KELAS (BERSIH DARI DATA DUMMY AWAL)
+    const [namaSiswa, setNamaSiswa] = useState("");
+    const [kelasSiswa, setKelasSiswa] = useState("");
+    const [rankingParalel, setRankingParalel] = useState<number | "">("");
     const [rumpun, setRumpun] = useState<"SAINTEK" | "SOSHUM">("SAINTEK");
-    const [skorTKA, setSkorTKA] = useState(740);
+    const [skorTKA, setSkorTKA] = useState<number | "">("");
     const [catatanKonseling, setCatatanKonseling] = useState(
-        "Profil akademik linear dan sangat konsisten. Pertahankan kestabilan nilai semester 5 untuk memaksimalkan peluang SNBP."
+        "Profil akademik linear dan konsisten. Pertahankan kestabilan nilai semester 5 untuk memaksimalkan peluang SNBP."
     );
 
     // 3. TARGET PRODI PILIHAN 1 & 2
@@ -128,6 +128,9 @@ export default function ModulSNBPPage() {
     const [raporData, setRaporData] = useState<Record<string, number[]>>({});
 
     const handleIsiContohRapor = () => {
+        setNamaSiswa("FADHILLAH UMAR");
+        setKelasSiswa("XII - 1");
+        setRankingParalel(1);
         const dummy: Record<string, number[]> = {};
         activeMapelList.forEach((m) => {
             dummy[m.id] = [90, 92, 93, 94, 96];
@@ -138,11 +141,14 @@ export default function ModulSNBPPage() {
 
     const handleResetRapor = () => {
         setRaporData({});
-        setSkorTKA(500);
+        setSkorTKA("");
+        setRankingParalel("");
+        setNamaSiswa("");
+        setKelasSiswa("");
     };
 
     const hitungRataRow = (mId: string) => {
-        const vals = raporData[mId] || [];
+        const vals = (raporData[mId] || []).filter((v) => typeof v === "number" && !isNaN(v) && v > 0);
         if (vals.length === 0) return 0;
         return vals.reduce((a, b) => a + b, 0) / vals.length || 0;
     };
@@ -164,10 +170,12 @@ export default function ModulSNBPPage() {
     const grandAvgRapor = hitungGrandTotal();
     // Konversi Rapor skala 0-100 ke skala baku IRT 200-800
     const raporIRT = grandAvgRapor > 0 ? Math.round(200 + (grandAvgRapor / 100) * 600) : 0;
+    const numericTKA = typeof skorTKA === "number" ? skorTKA : 0;
     // Modal 50% TKA + 50% Rapor
-    const modalAkademikSNBP = Math.round(skorTKA * 0.5 + raporIRT * 0.5);
+    const modalAkademikSNBP = Math.round(numericTKA * 0.5 + raporIRT * 0.5);
 
     const calcPeluangSNBP = (target: ProdiItem, isPilihan2 = false) => {
+        if (modalAkademikSNBP === 0) return 0;
         const rasio = target.peminat > 0 ? target.dayaTampung / target.peminat : 0.05;
         let baseBenchmark = target.passingGrade || 680;
 
@@ -185,16 +193,16 @@ export default function ModulSNBPPage() {
     // 7. TERUSKAN KE LEMBAR RAPOR RESMI SNBP
     const handleProceedToReport = () => {
         const payload = {
-            namaSiswa,
-            kelasSiswa,
-            rankingParalel,
+            namaSiswa: (namaSiswa || "SISWA PESERTA ASESMEN").toUpperCase(),
+            kelasSiswa: (kelasSiswa || "XII").toUpperCase(),
+            rankingParalel: rankingParalel || 1,
             rumpun,
             tanggal: new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
             target1,
             target2,
             grandAvgRapor: Number(grandAvgRapor.toFixed(1)),
             raporIRT,
-            skorTKA,
+            skorTKA: numericTKA,
             modalAkademikSNBP,
             peluangP1,
             peluangP2,
@@ -293,19 +301,39 @@ export default function ModulSNBPPage() {
                 </div>
             )}
 
-            {/* HEADER NAVIGASI */}
+            {/* HEADER NAVIGASI DENGAN LOGO RESMI */}
             <header className="border-b bg-white sticky top-0 z-30 shadow-2xs">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-                    <Link
-                        href="/"
-                        className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-emerald-900 transition"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        <span>Kembali ke Portal Hub</span>
-                    </Link>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href="/"
+                            className="p-2 rounded-xl hover:bg-slate-100 text-slate-600 transition flex items-center justify-center mr-1"
+                            title="Kembali ke Portal Hub"
+                        >
+                            <ArrowLeft className="w-4 h-4" />
+                        </Link>
+                        <div className="w-10 h-10 p-1 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-center justify-center shrink-0">
+                            <img
+                                src="/logo.png"
+                                alt="Logo SMA Muhammadiyah 18 Jakarta"
+                                className="w-full h-full object-contain"
+                            />
+                        </div>
+                        <div className="text-left">
+                            <span className="text-xs sm:text-sm font-black tracking-tight text-[#1e3a8a] uppercase block">
+                                SMA MUHAMMADIYAH 18 JAKARTA
+                            </span>
+                            <span className="text-[10px] text-emerald-800 font-mono font-bold block">
+                                MODUL ANALISIS &amp; RASIONALISASI SNBP 2026
+                            </span>
+                        </div>
+                    </div>
+
                     <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                        <span className="font-mono text-xs font-bold text-slate-700">Database SNBP Terverifikasi</span>
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="font-mono text-xs font-bold text-slate-700 hidden sm:inline">
+                            Database SNBP Terverifikasi
+                        </span>
                     </div>
                 </div>
             </header>
@@ -347,31 +375,37 @@ export default function ModulSNBPPage() {
                             </h3>
 
                             <div>
-                                <label className="block text-xs font-semibold text-slate-600 mb-1">Nama Siswa</label>
+                                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                                    Nama Lengkap Siswa (Otomatis Kapital)
+                                </label>
                                 <input
                                     type="text"
+                                    placeholder="MASUKKAN NAMA SISWA..."
                                     value={namaSiswa}
-                                    onChange={(e) => setNamaSiswa(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 focus:bg-white focus:border-emerald-700 outline-none"
+                                    onChange={(e) => setNamaSiswa(e.target.value.toUpperCase())}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:bg-white focus:border-emerald-700 outline-none uppercase"
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-600 mb-1">Kelas</label>
+                                    <label className="block text-xs font-semibold text-slate-600 mb-1">Kelas / Rombel</label>
                                     <input
                                         type="text"
+                                        placeholder="XII-1"
                                         value={kelasSiswa}
-                                        onChange={(e) => setKelasSiswa(e.target.value)}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold focus:bg-white focus:border-emerald-700 outline-none"
+                                        onChange={(e) => setKelasSiswa(e.target.value.toUpperCase())}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold focus:bg-white focus:border-emerald-700 outline-none uppercase font-mono"
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-600 mb-1">Ranking Paralel</label>
                                     <input
                                         type="number"
+                                        min={1}
+                                        placeholder="1"
                                         value={rankingParalel}
-                                        onChange={(e) => setRankingParalel(Number(e.target.value))}
+                                        onChange={(e) => setRankingParalel(e.target.value === "" ? "" : Number(e.target.value))}
                                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-black text-emerald-900 focus:bg-white focus:border-emerald-700 outline-none font-mono"
                                     />
                                 </div>
@@ -503,7 +537,7 @@ export default function ModulSNBPPage() {
                                         onClick={handleResetRapor}
                                         className="px-3 py-1 bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
                                     >
-                                        Reset
+                                        Reset Form
                                     </button>
                                 </div>
                             </div>
@@ -534,11 +568,12 @@ export default function ModulSNBPPage() {
                                                                 type="number"
                                                                 min={0}
                                                                 max={100}
+                                                                placeholder="0"
                                                                 className={`w-11 text-center rounded-lg py-1 text-xs font-mono font-bold border ${idx === 4
                                                                         ? "bg-white border-amber-300 text-amber-900 shadow-2xs"
                                                                         : "bg-slate-50 border-slate-200"
                                                                     }`}
-                                                                value={raporData[m.id]?.[idx] || ""}
+                                                                value={raporData[m.id]?.[idx] !== undefined && raporData[m.id]?.[idx] !== 0 ? raporData[m.id][idx] : ""}
                                                                 onChange={(e) => {
                                                                     const val = parseFloat(e.target.value) || 0;
                                                                     const updated = [...(raporData[m.id] || [0, 0, 0, 0, 0])];
@@ -549,7 +584,7 @@ export default function ModulSNBPPage() {
                                                         </td>
                                                     ))}
                                                     <td className="py-1.5 px-2 text-center font-bold text-emerald-950 bg-emerald-50/60 rounded text-xs font-mono">
-                                                        {avg.toFixed(1)}
+                                                        {avg > 0 ? avg.toFixed(1) : "-"}
                                                     </td>
                                                 </tr>
                                             );
@@ -576,9 +611,10 @@ export default function ModulSNBPPage() {
                                         type="number"
                                         min={200}
                                         max={800}
+                                        placeholder="Contoh: 700"
                                         value={skorTKA}
-                                        onChange={(e) => setSkorTKA(Number(e.target.value))}
-                                        className="w-32 text-center bg-white border-2 border-indigo-300 rounded-xl py-2 text-sm font-black text-indigo-950 focus:border-emerald-700 outline-none shadow-xs font-mono"
+                                        onChange={(e) => setSkorTKA(e.target.value === "" ? "" : Number(e.target.value))}
+                                        className="w-36 text-center bg-white border-2 border-indigo-300 rounded-xl py-2 text-sm font-black text-indigo-950 focus:border-emerald-700 outline-none shadow-xs font-mono"
                                     />
                                     <span className="text-xs text-indigo-900 font-bold">Skor Baku IRT Asesmen Terstandarisasi</span>
                                 </div>
@@ -586,7 +622,9 @@ export default function ModulSNBPPage() {
 
                             {/* Catatan Konseling */}
                             <div className="space-y-1.5">
-                                <label className="block text-xs font-bold text-slate-800 uppercase">Catatan Pembimbing / Konselor BK:</label>
+                                <label className="block text-xs font-bold text-slate-800 uppercase">
+                                    Catatan Pembimbing / Konselor BK:
+                                </label>
                                 <textarea
                                     rows={2}
                                     value={catatanKonseling}
@@ -599,7 +637,7 @@ export default function ModulSNBPPage() {
                             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-4">
                                 <div className="space-y-0.5">
                                     <p className="text-xs font-bold text-slate-700">
-                                        Rata-Rata Rapor: <span className="text-slate-900 font-black">{grandAvgRapor.toFixed(1)}</span> (~{raporIRT} IRT)
+                                        Rata-Rata Rapor: <span className="text-slate-900 font-black">{grandAvgRapor > 0 ? grandAvgRapor.toFixed(1) : "0.0"}</span> (~{raporIRT} IRT)
                                     </p>
                                     <p className="text-xs font-bold text-slate-700">
                                         Modal Akademik 50:50: <span className="text-emerald-700 text-sm font-black">{modalAkademikSNBP} Poin IRT</span>

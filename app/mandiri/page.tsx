@@ -25,27 +25,28 @@ export default function ModulMandiriPage() {
     // 1. STATE MODE JALUR (MANDIRI PTN vs KEDINASAN BKN)
     const [activeTab, setActiveTab] = useState<"PTN" | "KEDINASAN">("PTN");
 
-    // 2. STATE IDENTITAS SISWA
-    const [namaSiswa, setNamaSiswa] = useState("Fadhillah Umar");
-    const [kelasSiswa, setKelasSiswa] = useState("XII - 1");
+    // 2. STATE IDENTITAS SISWA (BERSIH DARI DUMMY DEFAULT)
+    const [namaSiswa, setNamaSiswa] = useState("");
+    const [kelasSiswa, setKelasSiswa] = useState("");
 
     // ==========================================
     // PARAMETER MODE A: SELEKSI MANDIRI PTN
     // ==========================================
-    const [modalAkademikPTN, setModalAkademikPTN] = useState(88.5); // Skala 0-100 (dari Rapor / UTBK)
+    const [modalAkademikPTN, setModalAkademikPTN] = useState<number | "">(""); // Skala 0-100 (dari Rapor / UTBK)
     const [targetMandiri1, setTargetMandiri1] = useState("SIMAK UI - S1 Ilmu Komputer");
     const [targetMandiri2, setTargetMandiri2] = useState("UTUL / CBT UGM - S1 Statistika");
-    const [bobotPrestasi, setBobotPrestasi] = useState(10); // Sertifikat Kejuaraan
-    const [bobotTahfidz, setBobotTahfidz] = useState(10); // Jalur Prestasi Keagamaan
+    const [bobotPrestasi, setBobotPrestasi] = useState(0); // Sertifikat Kejuaraan
+    const [bobotTahfidz, setBobotTahfidz] = useState(0); // Jalur Prestasi Keagamaan
     const [bobotPortofolio, setBobotPortofolio] = useState(0); // Seni / Olahraga
 
     // Engine Formula Mandiri PTN
     const ptnAnalytics = useMemo(() => {
+        const numericAkademik = typeof modalAkademikPTN === "number" ? modalAkademikPTN : 0;
         // 70% Modal Akademik + Bonus Prestasi + Afirmasi Tahfidz + Portofolio Seni
-        const baseScore = modalAkademikPTN * 0.7;
+        const baseScore = numericAkademik * 0.7;
         const totalBonus = bobotPrestasi + bobotTahfidz + bobotPortofolio;
         const finalScore = Number((baseScore + totalBonus).toFixed(1));
-        const peluangKelulusan = Math.min(95, Math.max(15, Math.round(finalScore * 0.95)));
+        const peluangKelulusan = numericAkademik > 0 ? Math.min(95, Math.max(15, Math.round(finalScore * 0.95))) : 0;
 
         return {
             baseScore: Number(baseScore.toFixed(1)),
@@ -59,10 +60,10 @@ export default function ModulMandiriPage() {
     // PARAMETER MODE B: SEKOLAH KEDINASAN (BKN)
     // ==========================================
     const [targetInstansi, setTargetInstansi] = useState("PKN_STAN");
-    const [skorTWK, setSkorTWK] = useState(85); // Ambang batas: 65 (Maks: 150)
-    const [skorTIU, setSkorTIU] = useState(110); // Ambang batas: 80 (Maks: 175)
-    const [skorTKP, setSkorTKP] = useState(175); // Ambang batas: 166 (Maks: 225)
-    const [nilaiRaporKedinasan, setNilaiRaporKedinasan] = useState(89.0);
+    const [skorTWK, setSkorTWK] = useState<number | "">(""); // Ambang batas: 65 (Maks: 150)
+    const [skorTIU, setSkorTIU] = useState<number | "">(""); // Ambang batas: 80 (Maks: 175)
+    const [skorTKP, setSkorTKP] = useState<number | "">(""); // Ambang batas: 166 (Maks: 225)
+    const [nilaiRaporKedinasan, setNilaiRaporKedinasan] = useState<number | "">("");
 
     const instansiList = [
         {
@@ -101,20 +102,26 @@ export default function ModulMandiriPage() {
 
     // Engine Aturan Gugur Mutlak SKD BKN (KemenPAN-RB Resmi)
     const skdAnalytics = useMemo(() => {
-        const passTWK = skorTWK >= 65;
-        const passTIU = skorTIU >= 80;
-        const passTKP = skorTKP >= 166;
-        const totalSKD = skorTWK + skorTIU + skorTKP;
+        const numTWK = typeof skorTWK === "number" ? skorTWK : 0;
+        const numTIU = typeof skorTIU === "number" ? skorTIU : 0;
+        const numTKP = typeof skorTKP === "number" ? skorTKP : 0;
+
+        const passTWK = numTWK >= 65;
+        const passTIU = numTIU >= 80;
+        const passTKP = numTKP >= 166;
+        const totalSKD = numTWK + numTIU + numTKP;
         const passTotal = totalSKD >= 311;
 
         // Status: Lulus hanya jika SELURUH subtes memenuhi ambang batas
-        const isLulusPassingGrade = passTWK && passTIU && passTKP && passTotal;
+        const isLulusPassingGrade = totalSKD > 0 && passTWK && passTIU && passTKP && passTotal;
 
-        // Tingkat Kompetitif (Biasanya formasi aman jika total > 390)
         let predikatKompetisi = "Tidak Memenuhi Ambang Batas (Gugur)";
         let peluangLolosTahap1 = 0;
 
-        if (isLulusPassingGrade) {
+        if (totalSKD === 0) {
+            predikatKompetisi = "Belum Melakukan Simulasi SKD";
+            peluangLolosTahap1 = 0;
+        } else if (isLulusPassingGrade) {
             if (totalSKD >= 410) {
                 predikatKompetisi = "Peringkat Puncak Aman (Sangat Kompetitif)";
                 peluangLolosTahap1 = 88;
@@ -139,15 +146,32 @@ export default function ModulMandiriPage() {
         };
     }, [skorTWK, skorTIU, skorTKP]);
 
+    // Tombol muat contoh data
+    const handleLoadContohData = () => {
+        setNamaSiswa("FADHILLAH UMAR");
+        setKelasSiswa("XII - 1");
+        if (activeTab === "PTN") {
+            setModalAkademikPTN(88.5);
+            setBobotPrestasi(10);
+            setBobotTahfidz(10);
+            setBobotPortofolio(0);
+        } else {
+            setSkorTWK(85);
+            setSkorTIU(110);
+            setSkorTKP(175);
+            setNilaiRaporKedinasan(89.0);
+        }
+    };
+
     // 3. GENERATE RAPOR DOKUMEN CETAK
     const handleProceedToReport = () => {
         const payload = {
             activeTab,
-            namaSiswa,
-            kelasSiswa,
+            namaSiswa: (namaSiswa || "SISWA PESERTA ASESMEN").toUpperCase(),
+            kelasSiswa: (kelasSiswa || "XII").toUpperCase(),
             tanggal: new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
             // Data PTN
-            modalAkademikPTN,
+            modalAkademikPTN: typeof modalAkademikPTN === "number" ? modalAkademikPTN : 0,
             targetMandiri1,
             targetMandiri2,
             bobotPrestasi,
@@ -156,10 +180,10 @@ export default function ModulMandiriPage() {
             ptnAnalytics,
             // Data Kedinasan
             activeInstansi,
-            skorTWK,
-            skorTIU,
-            skorTKP,
-            nilaiRaporKedinasan,
+            skorTWK: typeof skorTWK === "number" ? skorTWK : 0,
+            skorTIU: typeof skorTIU === "number" ? skorTIU : 0,
+            skorTKP: typeof skorTKP === "number" ? skorTKP : 0,
+            nilaiRaporKedinasan: typeof nilaiRaporKedinasan === "number" ? nilaiRaporKedinasan : 0,
             skdAnalytics
         };
         localStorage.setItem("m18_mandiri_report_data", JSON.stringify(payload));
@@ -168,19 +192,39 @@ export default function ModulMandiriPage() {
 
     return (
         <div className="min-h-screen bg-[#F8FAFC] text-slate-800 font-sans pb-16">
-            {/* NAVBAR */}
+            {/* HEADER NAVIGASI DENGAN LOGO RESMI */}
             <header className="border-b bg-white sticky top-0 z-30 shadow-2xs">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-                    <Link
-                        href="/"
-                        className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-indigo-900 transition"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        <span>Kembali ke Portal Hub</span>
-                    </Link>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href="/"
+                            className="p-2 rounded-xl hover:bg-slate-100 text-slate-600 transition flex items-center justify-center mr-1"
+                            title="Kembali ke Portal Hub"
+                        >
+                            <ArrowLeft className="w-4 h-4" />
+                        </Link>
+                        <div className="w-10 h-10 p-1 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-center justify-center shrink-0">
+                            <img
+                                src="/logo.png"
+                                alt="Logo SMA Muhammadiyah 18 Jakarta"
+                                className="w-full h-full object-contain"
+                            />
+                        </div>
+                        <div className="text-left">
+                            <span className="text-xs sm:text-sm font-black tracking-tight text-[#1e3a8a] uppercase block">
+                                SMA MUHAMMADIYAH 18 JAKARTA
+                            </span>
+                            <span className="text-[10px] text-indigo-900 font-mono font-bold block">
+                                MODUL MANDIRI PTN &amp; SPMB BKN 2026
+                            </span>
+                        </div>
+                    </div>
+
                     <div className="flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full bg-indigo-600" />
-                        <span className="font-mono text-xs font-bold text-slate-700">Regulasi Mandiri &amp; SPMB BKN</span>
+                        <span className="font-mono text-xs font-bold text-slate-700 hidden sm:inline">
+                            Regulasi Mandiri &amp; SPMB BKN
+                        </span>
                     </div>
                 </div>
             </header>
@@ -199,21 +243,32 @@ export default function ModulMandiriPage() {
                         </p>
                     </div>
 
-                    {/* TAB MODE SWITCHER */}
-                    <div className="flex items-center bg-white/10 p-1.5 rounded-2xl border border-white/20 shrink-0">
+                    <div className="flex flex-col sm:flex-row items-center gap-3">
+                        {/* TAB MODE SWITCHER */}
+                        <div className="flex items-center bg-white/10 p-1.5 rounded-2xl border border-white/20 shrink-0">
+                            <button
+                                onClick={() => setActiveTab("PTN")}
+                                className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${activeTab === "PTN" ? "bg-white text-indigo-950 shadow-sm" : "text-white/80 hover:text-white"
+                                    }`}
+                            >
+                                Seleksi Mandiri PTN
+                            </button>
+                            <button
+                                onClick={() => setActiveTab("KEDINASAN")}
+                                className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${activeTab === "KEDINASAN" ? "bg-amber-400 text-slate-950 shadow-sm" : "text-white/80 hover:text-white"
+                                    }`}
+                            >
+                                Sekolah Kedinasan (BKN)
+                            </button>
+                        </div>
+
                         <button
-                            onClick={() => setActiveTab("PTN")}
-                            className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${activeTab === "PTN" ? "bg-white text-indigo-950 shadow-sm" : "text-white/80 hover:text-white"
-                                }`}
+                            type="button"
+                            onClick={handleLoadContohData}
+                            className="px-3.5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black transition shadow-sm cursor-pointer flex items-center gap-1.5 shrink-0"
                         >
-                            Seleksi Mandiri PTN
-                        </button>
-                        <button
-                            onClick={() => setActiveTab("KEDINASAN")}
-                            className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${activeTab === "KEDINASAN" ? "bg-amber-400 text-slate-950 shadow-sm" : "text-white/80 hover:text-white"
-                                }`}
-                        >
-                            Sekolah Kedinasan (BKN)
+                            <Zap className="w-3.5 h-3.5" />
+                            <span>Contoh Data</span>
                         </button>
                     </div>
                 </div>
@@ -223,21 +278,27 @@ export default function ModulMandiriPage() {
                     {/* Identitas Siswa */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6 border-b border-slate-100">
                         <div>
-                            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Lengkap Siswa:</label>
+                            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                                Nama Lengkap Siswa (Otomatis Kapital):
+                            </label>
                             <input
                                 type="text"
+                                placeholder="MASUKKAN NAMA SISWA..."
                                 value={namaSiswa}
-                                onChange={(e) => setNamaSiswa(e.target.value)}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:bg-white focus:border-indigo-700 outline-none"
+                                onChange={(e) => setNamaSiswa(e.target.value.toUpperCase())}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:bg-white focus:border-indigo-700 outline-none uppercase"
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Kelas / Rombel:</label>
+                            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                                Kelas / Rombel:
+                            </label>
                             <input
                                 type="text"
+                                placeholder="XII - 1"
                                 value={kelasSiswa}
-                                onChange={(e) => setKelasSiswa(e.target.value)}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:bg-white focus:border-indigo-700 outline-none"
+                                onChange={(e) => setKelasSiswa(e.target.value.toUpperCase())}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:bg-white focus:border-indigo-700 outline-none uppercase font-mono"
                             />
                         </div>
                     </div>
@@ -299,8 +360,9 @@ export default function ModulMandiriPage() {
                                             step="0.1"
                                             min={0}
                                             max={100}
+                                            placeholder="0.0"
                                             value={modalAkademikPTN}
-                                            onChange={(e) => setModalAkademikPTN(Number(e.target.value))}
+                                            onChange={(e) => setModalAkademikPTN(e.target.value === "" ? "" : Number(e.target.value))}
                                             className="w-32 text-center bg-white border-2 border-indigo-300 rounded-xl py-2 text-sm font-black text-indigo-950 font-mono outline-none"
                                         />
                                     </div>
@@ -388,7 +450,7 @@ export default function ModulMandiriPage() {
                                         ESTIMASI PELUANG KELULUSAN
                                     </span>
                                     <p className="text-2xl font-black text-emerald-700 font-mono">
-                                        {ptnAnalytics.peluangKelulusan}% (Kompetitif)
+                                        {ptnAnalytics.peluangKelulusan}% {ptnAnalytics.peluangKelulusan > 0 ? "(Kompetitif)" : ""}
                                     </p>
                                 </div>
                             </div>
@@ -457,12 +519,13 @@ export default function ModulMandiriPage() {
                                             type="number"
                                             min={0}
                                             max={150}
+                                            placeholder="0"
                                             value={skorTWK}
-                                            onChange={(e) => setSkorTWK(Number(e.target.value))}
+                                            onChange={(e) => setSkorTWK(e.target.value === "" ? "" : Number(e.target.value))}
                                             className="w-full text-center border rounded-lg py-1.5 font-mono font-bold text-sm"
                                         />
                                         <div className="flex items-center justify-center gap-1 text-[11px]">
-                                            {skdAnalytics.passTWK ? (
+                                            {skdAnalytics.passTWK && typeof skorTWK === "number" ? (
                                                 <span className="text-emerald-700 font-bold flex items-center gap-1">
                                                     <CheckCircle2 className="w-3.5 h-3.5" /> Lolos Passing
                                                 </span>
@@ -484,12 +547,13 @@ export default function ModulMandiriPage() {
                                             type="number"
                                             min={0}
                                             max={175}
+                                            placeholder="0"
                                             value={skorTIU}
-                                            onChange={(e) => setSkorTIU(Number(e.target.value))}
+                                            onChange={(e) => setSkorTIU(e.target.value === "" ? "" : Number(e.target.value))}
                                             className="w-full text-center border rounded-lg py-1.5 font-mono font-bold text-sm"
                                         />
                                         <div className="flex items-center justify-center gap-1 text-[11px]">
-                                            {skdAnalytics.passTIU ? (
+                                            {skdAnalytics.passTIU && typeof skorTIU === "number" ? (
                                                 <span className="text-emerald-700 font-bold flex items-center gap-1">
                                                     <CheckCircle2 className="w-3.5 h-3.5" /> Lolos Passing
                                                 </span>
@@ -511,12 +575,13 @@ export default function ModulMandiriPage() {
                                             type="number"
                                             min={0}
                                             max={225}
+                                            placeholder="0"
                                             value={skorTKP}
-                                            onChange={(e) => setSkorTKP(Number(e.target.value))}
+                                            onChange={(e) => setSkorTKP(e.target.value === "" ? "" : Number(e.target.value))}
                                             className="w-full text-center border rounded-lg py-1.5 font-mono font-bold text-sm"
                                         />
                                         <div className="flex items-center justify-center gap-1 text-[11px]">
-                                            {skdAnalytics.passTKP ? (
+                                            {skdAnalytics.passTKP && typeof skorTKP === "number" ? (
                                                 <span className="text-emerald-700 font-bold flex items-center gap-1">
                                                     <CheckCircle2 className="w-3.5 h-3.5" /> Lolos Passing
                                                 </span>

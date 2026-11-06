@@ -44,8 +44,13 @@ export default function HubPortalLandingPage() {
           }`}
       >
         <div className="flex flex-col items-center space-y-4 px-4 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-[#1e3a8a] border-2 border-amber-400 flex items-center justify-center text-amber-400 font-black text-2xl shadow-xl">
-            M18
+          {/* Logo Sekolah di Splash Screen */}
+          <div className="w-20 h-20 p-2 rounded-2xl bg-white border border-slate-200 shadow-xl flex items-center justify-center">
+            <img
+              src="/logo.png"
+              alt="Logo SMA Muhammadiyah 18 Jakarta"
+              className="w-full h-full object-contain"
+            />
           </div>
           <div className="space-y-1">
             <span className="font-mono text-[10px] font-bold text-blue-700 uppercase tracking-widest block">
@@ -69,8 +74,13 @@ export default function HubPortalLandingPage() {
       <header className="border-b border-slate-200 bg-white/90 backdrop-blur-md sticky top-0 z-40 shadow-2xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-[#1e3a8a] border-2 border-amber-400 flex items-center justify-center text-amber-400 font-black text-base shadow-xs shrink-0">
-              M18
+            {/* Logo Sekolah di Navbar */}
+            <div className="w-12 h-12 p-1 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center justify-center shrink-0">
+              <img
+                src="/logo.png"
+                alt="Logo SMA Muhammadiyah 18 Jakarta"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div className="text-left">
               <div className="flex items-center gap-2">
@@ -240,8 +250,13 @@ export default function HubPortalLandingPage() {
       <footer className="border-t border-slate-200 bg-white py-8 mt-16 text-xs text-slate-500 font-medium">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-[#1e3a8a] text-amber-400 font-black flex items-center justify-center text-xs">
-              M18
+            {/* Logo Sekolah di Footer */}
+            <div className="w-9 h-9 p-1 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-center justify-center shrink-0">
+              <img
+                src="/logo.png"
+                alt="Logo SMA Muhammadiyah 18 Jakarta"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div className="text-left">
               <span className="font-bold text-slate-800 block">TIM PTN &bull; SMA Muhammadiyah 18 Jakarta</span>
